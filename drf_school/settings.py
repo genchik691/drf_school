@@ -1,8 +1,13 @@
+# drf_school/settings.py
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-dev-key-change-me'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-for-local-only')
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 

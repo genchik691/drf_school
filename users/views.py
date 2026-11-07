@@ -1,12 +1,14 @@
+# users/views.py
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from .models import User
 from .serializers import UserProfileSerializer
 
 
 class ProfileAPIView(generics.RetrieveUpdateAPIView):
-    """Просмотр и редактирование профиля пользователя."""
-    queryset = User.objects.all()
+    """Просмотр и редактирование профиля текущего пользователя."""
     serializer_class = UserProfileSerializer
-    permission_classes = [AllowAny]  # ✅ открыто по заданию
-    
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self) -> User:
+        return self.request.user
