@@ -20,3 +20,22 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_lessons_count(self, obj):
         """Возвращает количество уроков в курсе."""
         return obj.lessons.count()
+
+class CourseSerializer(serializers.ModelSerializer):
+    lessons = LessonSerializer(many=True, read_only=True)
+    lessons_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'preview', 'description', 'lessons', 'lessons_count', 'owner']
+        read_only_fields = ['owner']
+
+    def get_lessons_count(self, obj):
+        return obj.lessons.count()
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ['id', 'title', 'description', 'preview', 'video_link', 'course', 'owner']
+        read_only_fields = ['owner']
