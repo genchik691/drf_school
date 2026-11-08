@@ -1,6 +1,6 @@
 # users/views.py
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import User, Payment
 from .serializers import UserProfileSerializer, PaymentSerializer
@@ -8,7 +8,6 @@ from .filters import PaymentFilter
 
 
 class ProfileAPIView(generics.RetrieveUpdateAPIView):
-    """Просмотр и редактирование профиля текущего пользователя."""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -17,10 +16,13 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
 
 
 class PaymentListView(generics.ListAPIView):
-    """Список платежей с фильтрацией и сортировкой."""
-    queryset = Payment.objects.all()
+    """Список платежей текущего пользователя с фильтрацией."""
     serializer_class = PaymentSerializer
-    permission_classes = [AllowAny]  # по заданию безопасность не нужна
+    permission_classes = [IsAuthenticated]  # ✅ только авторизованные
     filter_backends = [DjangoFilterBackend]
     filterset_class = PaymentFilter
+
+    def get_queryset(self):
+        # ✅ только платежи текущего пользователя
+        return Payment.objects.filter(user=self.request.user)
 
