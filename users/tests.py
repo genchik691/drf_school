@@ -33,7 +33,7 @@ class PaymentFilterTest(TestCase):
         """Аноним не может получить платежи."""
         client = APIClient()
         response = client.get('/payments/')
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_payments_only_own(self):
         """Пользователь видит только свои платежи."""

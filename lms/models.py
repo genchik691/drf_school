@@ -1,13 +1,19 @@
+# lms/models.py
 from django.db import models
+from django.conf import settings
 
 
 class Course(models.Model):
-    """Курс."""
     title = models.CharField(max_length=255, verbose_name='Название')
-    preview = models.ImageField(
-        upload_to='courses/', blank=True, null=True, verbose_name='Превью'
+    preview = models.ImageField(upload_to='courses/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    owner = models.ForeignKey(  # ✅
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='courses',
+        verbose_name='Владелец',
+        null=True, blank=True,
     )
-    description = models.TextField(blank=True, null=True, verbose_name='Описание')
 
     class Meta:
         verbose_name = 'Курс'
@@ -16,20 +22,50 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+class Subscription(models.Model):
+    """Подписка пользователя на обновления курса."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='Пользователь'
+    )
+    course = models.ForeignKey(
+        'lms.Course',
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='Курс'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'course'],
+                name='unique_user_course_subscription'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} → {self.course.title}"
 
 class Lesson(models.Model):
-    """Урок."""
     title = models.CharField(max_length=255, verbose_name='Название')
-    description = models.TextField(blank=True, null=True, verbose_name='Описание')
-    preview = models.ImageField(
-        upload_to='lessons/', blank=True, null=True, verbose_name='Превью'
-    )
-    video_link = models.URLField(blank=True, null=True, verbose_name='Ссылка на видео')
+    description = models.TextField(blank=True, null=True)
+    preview = models.ImageField(upload_to='lessons/', blank=True, null=True)
+    video_link = models.URLField(blank=True, null=True)
     course = models.ForeignKey(
-        Course,
+        Course, on_delete=models.CASCADE,
+        related_name='lessons', verbose_name='Курс'
+    )
+    owner = models.ForeignKey(  # ✅
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='lessons',  # ✅ связь
-        verbose_name='Курс'
+        related_name='lessons',
+        verbose_name='Владелец',
+        null=True, blank=True,
     )
 
     class Meta:
@@ -38,4 +74,3 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.title
-    
