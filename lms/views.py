@@ -1,7 +1,7 @@
 # lms/views.py
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsModerator, IsOwnerOrModerator
+from users.permissions import IsModerator, NotIsModerator, IsOwnerOrModerator
 from .models import Course, Lesson
 from .serializers import CourseSerializer, LessonSerializer
 
@@ -18,7 +18,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # ✅ создание и удаление — только не модераторы
         if self.action in ['create', 'destroy']:
-            return [IsAuthenticated(), ~IsModerator()]
+            return [IsAuthenticated(), NotIsModerator()]
         # ✅ редактирование — владелец или модератор
         if self.action in ['update', 'partial_update']:
             return [IsAuthenticated(), IsOwnerOrModerator()]
@@ -40,7 +40,7 @@ class LessonListCreateView(generics.ListCreateAPIView):
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            return [IsAuthenticated(), ~IsModerator()]
+            return [IsAuthenticated(), NotIsModerator()]
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
@@ -58,6 +58,6 @@ class LessonRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_permissions(self):
         if self.request.method == 'DELETE':
-            return [IsAuthenticated(), ~IsModerator()]
+            return [IsAuthenticated(), NotIsModerator()]
         return [IsAuthenticated(), IsOwnerOrModerator()]
     

@@ -11,6 +11,14 @@ class IsModerator(BasePermission):
             and request.user.groups.filter(name='Модераторы').exists()
         )
 
+class NotIsModerator(BasePermission):
+    """Разрешает доступ всем, кроме модераторов."""
+    def has_permission(self, request, view):
+        return not (
+            request.user.is_authenticated
+            and request.user.groups.filter(name='Модераторы').exists()
+        )
+
 
 class IsOwnerOrModerator(BasePermission):
     """Доступ владельцу объекта или модератору."""

@@ -29,11 +29,9 @@ Django + Django REST Framework: веб-школа с курсами и урок�
 drf_school/
 ├── manage.py
 ├── requirements.txt
-├── .env
-├── .env.example
-├── .gitignore
+├── .env.example # Пример переменных (без секретов)
+├── .gitignore   # Исключает .env, db.sqlite3, media/
 ├── README.md
-├── db.sqlite3
 │
 ├── drf_school/ # Настройки проекта
 │ ├── init.py
@@ -281,6 +279,18 @@ python manage.py runserver
 Сервер: http://127.0.0.1:8000/
 ```
 
+## 🔒 Безопасность репозитория
+
+В репозитории **не хранятся**:
+
+| Файл | Причина |
+|:-----|:--------|
+| `.env` | Содержит `SECRET_KEY` |
+| `db.sqlite3` | Локальная база с данными |
+| `media/` | Загруженные пользователями файлы |
+| `.venv/` | Виртуальное окружение |
+
+В репозитории **есть** только `.env.example` с примерами переменных без реальных значений.
 ## 🧪 Проверка в Postman
 
 Получить токен
