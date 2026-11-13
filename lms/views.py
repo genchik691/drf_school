@@ -4,6 +4,30 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsModerator, NotIsModerator, IsOwnerOrModerator
 from .models import Course, Lesson
 from .serializers import CourseSerializer, LessonSerializer
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+
+class SubscriptionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Управление подпиской на курс',
+        description='Создаёт подписку, если её нет. Удаляет, если есть.',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'course_id': {'type': 'integer', 'description': 'ID курса'}
+                },
+                'required': ['course_id'],
+            }
+        },
+        responses={
+            200: {'description': 'Подписка удалена'},
+            201: {'description': 'Подписка добавлена'},
+            400: {'description': 'course_id не передан'},
+        },
+    )
+    def post(self, request, *args, **kwargs):
 
 
 class CourseViewSet(viewsets.ModelViewSet):
