@@ -8,6 +8,8 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-for-local-only')
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
@@ -20,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # ✅ DRF
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt',
     # ✅ Приложения
@@ -88,6 +91,7 @@ AUTH_USER_MODEL = 'users.User'
 
 # ✅ DRF
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # ✅
     ],
@@ -105,3 +109,9 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'drf_school API',
+    'DESCRIPTION': 'LMS: курсы, уроки, платежи, подписки',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
