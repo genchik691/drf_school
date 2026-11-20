@@ -18,6 +18,7 @@ class Course(models.Model):
         max_digits=10, decimal_places=2, default=0,
         verbose_name="Цена, руб."
     )
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Курс'
