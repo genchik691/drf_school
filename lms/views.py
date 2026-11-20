@@ -1,5 +1,6 @@
 # lms/views.py
 from rest_framework import viewsets, generics
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsModerator, NotIsModerator, IsOwnerOrModerator
 from .models import Course, Lesson
@@ -28,6 +29,31 @@ class SubscriptionAPIView(APIView):
         },
     )
     def post(self, request, *args, **kwargs):
+        course_id = request.data.get("course_id")
+        if not course_id:
+            return Response(
+                {"error": "Поле course_id обязательно"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        course = get_object_or_404(Course, id=course_id)
+        subscription = Subscription.objects.filter(
+            user=request.user,
+            course=course,
+        ).first()
+
+        if subscription:
+            subscription.delete()
+            return Response(
+                {"message": "Подписка удалена"},
+                status=status.HTTP_200_OK,
+            )
+
+        Subscription.objects.create(user=request.user, course=course)
+        return Response(
+            {"message": "Подписка добавлена"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CourseViewSet(viewsets.ModelViewSet):
