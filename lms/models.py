@@ -14,6 +14,10 @@ class Course(models.Model):
         verbose_name='Владелец',
         null=True, blank=True,
     )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        verbose_name="Цена, руб."
+    )
 
     class Meta:
         verbose_name = 'Курс'

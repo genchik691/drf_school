@@ -21,3 +21,6 @@ media/
 .env
 .env.local
 
+# Сгенерированные артефакты (не коммитим)
+schema.yml
+openapi.json
