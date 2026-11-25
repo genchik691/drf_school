@@ -288,11 +288,9 @@ drf_school/
 
 | Переменная | Пример | Назначение |
 |:-----------|:-------|:-----------|
-| `REDIS_URL` | `redis://localhost:6379/0` | Общий URL Redis |
-| `CELERY_BROKER_URL` | `redis://localhost:6379/0` | Брокер |
-| `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` | Result backend |
-| `EMAIL_BACKEND` | `django.core.mail.backends.console.EmailBackend` | Для разработки — письма в консоль |
-| `DEFAULT_FROM_EMAIL` | `noreply@drf-school.local` | Отправитель |
+| `REDIS_URL` | `redis://localhost:6379/0` | URL Redis — используется и как брокер Celery, и как result backend |
+| `EMAIL_BACKEND` | `django.core.mail.backends.console.EmailBackend` | Для разработки — письма выводятся в консоль |
+| `DEFAULT_FROM_EMAIL` | `noreply@drf-school.local` | Адрес отправителя писем |
 
 ### Таймзона
 
@@ -322,6 +320,9 @@ Redis не имеет официальной сборки для Windows. Вар
 | Worker (Windows — обязательно `--pool=solo`) | `celery -A drf_school worker -l info --pool=solo` |
 | Beat (расписание) | `celery -A drf_school beat -l info` |
 | Django | `python manage.py runserver` |
+| Worker (Linux/macOS) | `celery -A drf_school worker -l info` |
+| Worker (Windows, eventlet) | `pip install eventlet && celery -A drf_school worker -l info -P eventlet` |
+| Flower (мониторинг) | `pip install flower && celery -A drf_school flower` |
 
 > ⚠️ На Windows пул `prefork` не работает — используйте `--pool=solo` или `-P eventlet` (`pip install eventlet`).
 

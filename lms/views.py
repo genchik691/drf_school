@@ -1,6 +1,7 @@
 # lms/views.py
 from datetime import timedelta
 
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
@@ -23,7 +24,11 @@ def notify_course_subscribers(course: Course, previous_updated_at) -> None:
     """
     Отправляет письма подписчикам курса, если с прошлого обновления
     прошло больше COURSE_UPDATE_COOLDOWN.
+
     previous_updated_at — значение course.updated_at ДО текущего save().
+
+    Отправка оборачивается в transaction.on_commit: если транзакция
+    откатится, письмо не уйдёт.
     """
     if previous_updated_at is not None:
         elapsed = timezone.now() - previous_updated_at
@@ -36,8 +41,18 @@ def notify_course_subscribers(course: Course, previous_updated_at) -> None:
         .select_related("user")
     )
     for sub in subscribers:
-        if sub.user.email:
-            send_course_update_email.delay(sub.user.email, course.title)
+        if not sub.user.email:
+            continue
+        # Фиксируем значения в локальных переменных, чтобы избежать
+        # late-binding в lambda (иначе все задачи получат данные
+        # последнего подписчика).
+        email = sub.user.email
+        title = course.title
+        transaction.on_commit(
+            lambda email=email, title=title: (
+                send_course_update_email.delay(email, title)
+            )
+        )
 
 
 class SubscriptionAPIView(APIView):
@@ -119,26 +134,23 @@ class CourseViewSet(viewsets.ModelViewSet):
         # 3) Рассылка подписчикам (с проверкой 4-часового кулдауна)
         notify_course_subscribers(course, previous_updated_at)
 
+
 class CourseUpdateAPIView(generics.UpdateAPIView):
+    """
+    Legacy-эндпоинт обновления курса.
+
+    Оставлен для обратной совместимости API. Логика полностью
+    делегируется notify_course_subscribers, чтобы поведение совпадало
+    с CourseViewSet.
+    """
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
     def perform_update(self, serializer):
-        course = serializer.instance
-        # Фиксируем время ДО обновления
-        last_updated = course.updated_at
+        previous_updated_at = serializer.instance.updated_at
+        course = serializer.save()
+        notify_course_subscribers(course, previous_updated_at)
 
-        course = serializer.save()  # ← обновление произошло, updated_at стал now
-
-        # Проверяем: прошло ли больше 4 часов с предыдущего обновления?
-        if last_updated and (timezone.now() - last_updated) < timedelta(hours=4):
-            return course  # уведомление НЕ отправляем
-
-        subscribers = Subscription.objects.filter(course=course).select_related("user")
-        for sub in subscribers:
-            if sub.user.email:
-                send_course_update_email.delay(sub.user.email, course.title)
-        return course
 
 class LessonListCreateView(generics.ListCreateAPIView):
     serializer_class = LessonSerializer
@@ -173,8 +185,8 @@ class LessonRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAuthenticated(), IsOwnerOrModerator()]
 
     def perform_update(self, serializer):
-        # Доп. задание: уведомление при обновлении урока
-        # previous_updated_at — из course, к которому относится урок
+        # Доп. задание: уведомление при обновлении урока.
+        # previous_updated_at берём из course, к которому относится урок.
         lesson = serializer.instance
         course = lesson.course
         previous_course_updated_at = course.updated_at if course else None
@@ -182,6 +194,11 @@ class LessonRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         lesson = serializer.save()
 
         if course:
-            # обновляем updated_at курса и рассылаем подписчикам
-            Course.objects.filter(pk=course.pk).update(updated_at=timezone.now())
+            # Обновляем updated_at курса через save(), а не .update(),
+            # чтобы не обходить auto_now (если оно задано на поле)
+            # и сохранить консистентность объекта в памяти.
+            course.updated_at = timezone.now()
+            course.save(update_fields=["updated_at"])
+            course.refresh_from_db(fields=["updated_at"])
+
             notify_course_subscribers(course, previous_course_updated_at)
