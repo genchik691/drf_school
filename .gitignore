@@ -24,3 +24,7 @@ media/
 # Сгенерированные артефакты (не коммитим)
 schema.yml
 openapi.json
+
+.coverage
+coverage.txt
+htmlcov/
